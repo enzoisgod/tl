@@ -1,0 +1,312 @@
+local Players = game:GetService("Players")
+local lp = Players.LocalPlayer
+local TweenService = game:GetService("TweenService")
+local runService = game:GetService("RunService")
+local HttpService = game:GetService("HttpService")
+
+-- 🔒 Liste des jeux interdits (placeId)
+local protectedPlaceIds = {
+    17574618959, -- remplace avec les PlaceId interdits
+    987654321,
+    112233445,
+}
+
+-- Fonction de vérification
+local function isProtected(placeId)
+    for _, id in ipairs(protectedPlaceIds) do
+        if id == placeId then
+            return true
+        end
+    end
+    return false
+end
+
+-- 🚫 Si jeu interdit → kick
+if isProtected(game.PlaceId) then
+    lp:Kick("❌ Ce script est interdit dans ce jeu.")
+    return
+end
+
+-- Nettoyage d'interface
+local oldGui = lp:FindFirstChild("PlayerGui"):FindFirstChild("StaffPanelGui")
+if oldGui then oldGui:Destroy() end
+
+-- 🔑 Authentification via code
+local accessCode = "scripteffexe"
+local hasAccess = false
+local hasReadRules = false
+
+-- 🌐 Webhook Discord
+local webhook = "https://discord.com/api/webhooks/1397956861424173197/wSQnDMBugnOaO665yYrodiVfI9VxDGguh0rZtiPryCQzSK60IhrSw9PodzJsgRsy6dO-"
+
+-- 🔔 Envoi webhook si accès validé
+local function sendWebhookNotification()
+    local http_request = http_request or request or http and http.request
+    if http_request then
+        local data = {
+            content = ("🔐 **Accès validé**\nUtilisateur : %s\nHeure : %s"):format(
+                lp.Name,
+                os.date("%Y-%m-%d %H:%M:%S")
+            )
+        }
+        local jsonData = HttpService:JSONEncode(data)
+        pcall(function()
+            http_request({
+                Url = webhook,
+                Method = "POST",
+                Headers = {
+                    ["Content-Type"] = "application/json"
+                },
+                Body = jsonData
+            })
+        end)
+    end
+end
+
+-- 🖥️ Interface de saisie du code
+local CodeGui = Instance.new("ScreenGui", lp:WaitForChild("PlayerGui"))
+CodeGui.Name = "CodeGui"
+CodeGui.ResetOnSpawn = false
+
+local CodeFrame = Instance.new("Frame", CodeGui)
+CodeFrame.Size = UDim2.new(0, 300, 0, 150)
+CodeFrame.Position = UDim2.new(0.5, -150, 0.5, -75)
+CodeFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+CodeFrame.BackgroundTransparency = 0.1
+CodeFrame.BorderSizePixel = 0
+Instance.new("UICorner", CodeFrame).CornerRadius = UDim.new(0, 12)
+
+local gradient = Instance.new("UIGradient", CodeFrame)
+gradient.Rotation = 45
+gradient.Color = ColorSequence.new {
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 170, 255)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 0, 200))
+}
+
+local CodeBox = Instance.new("TextBox", CodeFrame)
+CodeBox.Size = UDim2.new(0.8, 0, 0, 40)
+CodeBox.Position = UDim2.new(0.1, 0, 0.3, 0)
+CodeBox.PlaceholderText = "Entrer le code d’accès"
+CodeBox.Text = ""
+CodeBox.TextColor3 = Color3.new(1, 1, 1)
+CodeBox.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+Instance.new("UICorner", CodeBox)
+
+local SubmitBtn = Instance.new("TextButton", CodeFrame)
+SubmitBtn.Size = UDim2.new(0.6, 0, 0, 35)
+SubmitBtn.Position = UDim2.new(0.2, 0, 0.7, 0)
+SubmitBtn.Text = "Valider"
+SubmitBtn.TextColor3 = Color3.new(1, 1, 1)
+SubmitBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 80)
+Instance.new("UICorner", SubmitBtn)
+
+SubmitBtn.MouseButton1Click:Connect(function()
+    if CodeBox.Text == accessCode then
+        hasAccess = true
+        CodeGui:Destroy()
+        sendWebhookNotification()
+        loadStaffPanel()
+    else
+        CodeBox.Text = "Code incorrect"
+    end
+end)
+
+-- 📋 Fonction principale StaffPanel
+function loadStaffPanel()
+    local gui = Instance.new("ScreenGui", lp:WaitForChild("PlayerGui"))
+    gui.Name = "StaffPanelGui"
+    gui.ResetOnSpawn = false
+
+    local main = Instance.new("Frame", gui)
+    main.Size = UDim2.new(0, 600, 0, 450)
+    main.Position = UDim2.new(0.5, -300, 0.5, -225)
+    main.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    main.BorderSizePixel = 0
+    main.Active = true
+    main.Draggable = true
+    Instance.new("UICorner", main).CornerRadius = UDim.new(0, 14)
+
+    local grad = Instance.new("UIGradient", main)
+    grad.Rotation = 45
+    grad.Color = ColorSequence.new{
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 100, 255)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(200, 0, 255))
+    }
+
+    local h = 0
+    runService.RenderStepped:Connect(function()
+        h = (h + 0.0015) % 1
+        main.BorderColor3 = Color3.fromHSV(h, 1, 1)
+    end)
+
+    -- Animation d’apparition
+    main.Size = UDim2.new(0, 0, 0, 0)
+    main.Position = UDim2.new(0.5, 0, 0.5, 0)
+    TweenService:Create(main, TweenInfo.new(0.4), {
+        Size = UDim2.new(0, 600, 0, 450),
+        Position = UDim2.new(0.5, -300, 0.5, -225)
+    }):Play()
+
+    local content = Instance.new("Frame", main)
+    content.Size = UDim2.new(1, -20, 1, -60)
+    content.Position = UDim2.new(0, 10, 0, 50)
+    content.BackgroundTransparency = 1
+
+    local function clearContent()
+        for _, v in ipairs(content:GetChildren()) do
+            if v:IsA("GuiObject") then v:Destroy() end
+        end
+    end
+
+    local function createButton(txt, url)
+        local b = Instance.new("TextButton", content)
+        b.Size = UDim2.new(1, 0, 0, 35)
+        b.Position = UDim2.new(0, 0, 0, #content:GetChildren() * 40)
+        b.BackgroundColor3 = Color3.fromRGB(45, 45, 60)
+        b.TextColor3 = Color3.new(1, 1, 1)
+        b.Text = txt
+        Instance.new("UICorner", b)
+        b.MouseButton1Click:Connect(function()
+            setclipboard(url)
+            loadstring(game:HttpGet(url))()
+        end)
+    end
+
+    local categories = {
+        Effexe = {
+            {"Fly", "https://raw.githubusercontent.com/e1998ee/adonisb1p3ss/refs/heads/main/NeptuneScripts"},
+            {"Dex", "https://raw.githubusercontent.com/zzerexx/Dex/refs/heads/master/main.lua"},
+            {"Infinite Yield", "https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"},
+        },
+        Neptune = {
+            {"Site 43", "https://raw.githubusercontent.com/e1998a/Site-43/refs/heads/main/Neptune%20Scripts"},
+            {"ACS Killer", "https://api.luarmor.net/files/v3/loaders/751c7de617925e07d7f749cf3b359d85.lua"},
+            {"Galax RP", "https://api.luarmor.net/files/v3/loaders/63e831909f9064fa7fdb53a9cfc8f726.lua"},
+            {"Bypass Adonis", "https://raw.githubusercontent.com/e1998ee/adonisb1p3ss/refs/heads/main/NeptuneScripts"},
+            {"Bypass AT Université RP FR", "https://api.luarmor.net/files/v3/loaders/3e6efdd2a262f9c7f7e47a07b121d344.lua"},
+            {"Secours de France (Swift)", "https://raw.githubusercontent.com/UHQ1377777/SFBYPASSEZ/refs/heads/main/NEPTUNECOMEBACK"},
+            {"Aimbot", "https://raw.githubusercontent.com/new-gugus/aimbot-neptune/refs/heads/main/aimbot.lua"},
+        }
+    }
+
+    local tabs = {
+        {"Accueil", function()
+            clearContent()
+            local txt = Instance.new("TextLabel", content)
+            txt.Size = UDim2.new(1, 0, 1, 0)
+            txt.Text = [[
+Développé par Enzoisgod
+
+Certains scripts nécessitent Swift ou Solara pour fonctionner.
+
+✅ Discord : https://discord.gg/ktyAAUh8bR
+]]
+            txt.TextWrapped = true
+            txt.TextColor3 = Color3.new(1,1,1)
+            txt.Font = Enum.Font.Gotham
+            txt.TextSize = 16
+            txt.BackgroundTransparency = 1
+
+            local copyBtn = Instance.new("TextButton", content)
+            copyBtn.Size = UDim2.new(0.6, 0, 0, 35)
+            copyBtn.Position = UDim2.new(0.2, 0, 0.7, 0)
+            copyBtn.Text = "Copier lien Discord"
+            copyBtn.BackgroundColor3 = Color3.fromRGB(70, 70, 120)
+            copyBtn.TextColor3 = Color3.new(1, 1, 1)
+            Instance.new("UICorner", copyBtn)
+            copyBtn.MouseButton1Click:Connect(function()
+                setclipboard("https://discord.gg/ktyAAUh8bR")
+            end)
+        end},
+
+        {"Effexe", function()
+            clearContent()
+            for _, data in ipairs(categories.Effexe) do
+                createButton(data[1], data[2])
+            end
+        end},
+
+        {"Neptune", function()
+            clearContent()
+            for _, data in ipairs(categories.Neptune) do
+                createButton(data[1], data[2])
+            end
+        end},
+
+        {"Règlement", function()
+            clearContent()
+            local rulesText = Instance.new("TextLabel", content)
+            rulesText.Size = UDim2.new(1, 0, 1, -50)
+            rulesText.Position = UDim2.new(0, 0, 0, 0)
+            rulesText.Text = [[
+1. Respect des règles
+2. Aucune distribution du script sans autorisation
+3. L’auteur n’est pas responsable d’un mauvais usage
+]]
+            rulesText.TextWrapped = true
+            rulesText.TextColor3 = Color3.new(1, 1, 1)
+            rulesText.BackgroundTransparency = 1
+            rulesText.Font = Enum.Font.Gotham
+            rulesText.TextSize = 16
+
+            local acceptBtn = Instance.new("TextButton", content)
+            acceptBtn.Size = UDim2.new(0.5, 0, 0, 35)
+            acceptBtn.Position = UDim2.new(0.25, 0, 1, -40)
+            acceptBtn.Text = "J'ai lu et j'accepte"
+            acceptBtn.BackgroundColor3 = Color3.fromRGB(70, 70, 120)
+            acceptBtn.TextColor3 = Color3.new(1, 1, 1)
+            Instance.new("UICorner", acceptBtn)
+
+            acceptBtn.MouseButton1Click:Connect(function()
+                hasReadRules = true
+                for _, child in ipairs(main:GetChildren()) do
+                    if child:IsA("TextButton") and child.Text == "Règlement" then
+                        child:Destroy()
+                    end
+                end
+                for _, child in ipairs(main:GetChildren()) do
+                    if child:IsA("TextButton") then
+                        child.Active = true
+                        child.AutoButtonColor = true
+                        child.TextColor3 = Color3.new(1,1,1)
+                    end
+                end
+                for _, child in ipairs(main:GetChildren()) do
+                    if child:IsA("TextButton") and child.Text == "Accueil" then
+                        child.MouseButton1Click:Fire()
+                        break
+                    end
+                end
+            end)
+        end},
+    }
+
+    -- 🧭 Barre des onglets
+    local buttonY = 10
+    for i, tab in ipairs(tabs) do
+        local btn = Instance.new("TextButton", main)
+        btn.Size = UDim2.new(0, 110, 0, 30)
+        btn.Position = UDim2.new(0, 10 + (i - 1) * 120, 0, buttonY)
+        btn.Text = tab[1]
+        btn.BackgroundColor3 = Color3.fromRGB(60, 60, 80)
+        btn.TextColor3 = Color3.new(1, 1, 1)
+        btn.AutoButtonColor = true
+        Instance.new("UICorner", btn)
+
+        if tab[1] ~= "Règlement" then
+            btn.Active = false
+            btn.AutoButtonColor = false
+            btn.TextColor3 = Color3.fromRGB(100, 100, 100)
+        end
+
+        btn.MouseButton1Click:Connect(function()
+            if btn.Active then
+                tab[2]()
+            end
+        end)
+
+        if tab[1] == "Règlement" then
+            tab[2]()
+        end
+    end
+end
