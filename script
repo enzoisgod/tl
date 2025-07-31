@@ -177,6 +177,7 @@ function loadStaffPanel()
             {"Fly", "https://raw.githubusercontent.com/e1998ee/adonisb1p3ss/refs/heads/main/NeptuneScripts"},
             {"Dex", "https://raw.githubusercontent.com/zzerexx/Dex/refs/heads/master/main.lua"},
             {"Infinite Yield", "https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"},
+            {"Arsenal Cheat", "loadstring(game:HttpGet("https://raw.githubusercontent.com/Insertl/QuotasHub/main/BETAv1.3"))()"},
         },
         Neptune = {
             {"Site 43", "https://raw.githubusercontent.com/e1998a/Site-43/refs/heads/main/Neptune%20Scripts"},
