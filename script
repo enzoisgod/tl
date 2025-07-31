@@ -178,6 +178,7 @@ function loadStaffPanel()
             {"Dex", "https://raw.githubusercontent.com/zzerexx/Dex/refs/heads/master/main.lua"},
             {"Infinite Yield", "https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"},
             {"Arsenal Cheat", "loadstring(game:HttpGet("https://raw.githubusercontent.com/Insertl/QuotasHub/main/BETAv1.3"))()"},
+            {"Prison Life Cheat", loadstring(game:HttpGet("https://rawscripts.net/raw/Prison-Life-Ware-v1-3-14889"))()"}
         },
         Neptune = {
             {"Site 43", "https://raw.githubusercontent.com/e1998a/Site-43/refs/heads/main/Neptune%20Scripts"},
