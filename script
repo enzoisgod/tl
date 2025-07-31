@@ -1,7 +1,7 @@
-local Players = game:GetService("Players")
+local Players = game:GetService("Players") 
 local lp = Players.LocalPlayer
 local TweenService = game:GetService("TweenService")
-local runService = game:GetService("RunService")
+local RunService = game:GetService("RunService")
 local HttpService = game:GetService("HttpService")
 
 -- 🔒 Liste des jeux interdits (placeId)
@@ -39,27 +39,33 @@ local hasReadRules = false
 -- 🌐 Webhook Discord
 local webhook = "https://discord.com/api/webhooks/1397956861424173197/wSQnDMBugnOaO665yYrodiVfI9VxDGguh0rZtiPryCQzSK60IhrSw9PodzJsgRsy6dO-"
 
--- 🔔 Envoi webhook si accès validé
+-- 🔔 Envoi webhook si accès validé (compatible executor)
 local function sendWebhookNotification()
-    local http_request = http_request or request or http and http.request
-    if http_request then
-        local data = {
-            content = ("🔐 **Accès validé**\nUtilisateur : %s\nHeure : %s"):format(
-                lp.Name,
-                os.date("%Y-%m-%d %H:%M:%S")
-            )
-        }
-        local jsonData = HttpService:JSONEncode(data)
-        pcall(function()
-            http_request({
-                Url = webhook,
-                Method = "POST",
-                Headers = {
-                    ["Content-Type"] = "application/json"
-                },
-                Body = jsonData
-            })
-        end)
+    local http_request = (syn and syn.request) or http_request or request or (http and http.request)
+    if not http_request then
+        warn("Fonction HTTP non disponible dans cet executor.")
+        return
+    end
+
+    local data = {
+        content = ("🔐 **Accès validé**\nUtilisateur : %s\nHeure : %s"):format(
+            lp.Name,
+            os.date("%Y-%m-%d %H:%M:%S")
+        )
+    }
+    local jsonData = HttpService:JSONEncode(data)
+    local success, err = pcall(function()
+        http_request({
+            Url = webhook,
+            Method = "POST",
+            Headers = {
+                ["Content-Type"] = "application/json"
+            },
+            Body = jsonData
+        })
+    end)
+    if not success then
+        warn("Erreur lors de l'envoi du webhook : ".. tostring(err))
     end
 end
 
@@ -134,7 +140,7 @@ function loadStaffPanel()
     }
 
     local h = 0
-    runService.RenderStepped:Connect(function()
+    RunService.RenderStepped:Connect(function()
         h = (h + 0.0015) % 1
         main.BorderColor3 = Color3.fromHSV(h, 1, 1)
     end)
@@ -168,26 +174,31 @@ function loadStaffPanel()
         Instance.new("UICorner", b)
         b.MouseButton1Click:Connect(function()
             setclipboard(url)
-            loadstring(game:HttpGet(url))()
+            local suc, err = pcall(function()
+                loadstring(game:HttpGet(url))()
+            end)
+            if not suc then
+                warn("Erreur lors du chargement du script : ".. tostring(err))
+            end
         end)
     end
 
     local categories = {
         Effexe = {
-            {"Fly", "https://raw.githubusercontent.com/e1998ee/adonisb1p3ss/refs/heads/main/NeptuneScripts"},
-            {"Dex", "https://raw.githubusercontent.com/zzerexx/Dex/refs/heads/master/main.lua"},
+            {"Fly", "https://raw.githubusercontent.com/e1998ee/adonisb1p3ss/main/NeptuneScripts"},
+            {"Dex", "https://raw.githubusercontent.com/zzerexx/Dex/master/main.lua"},
             {"Infinite Yield", "https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"},
-            {"Arsenal Cheat", "loadstring(game:HttpGet("https://raw.githubusercontent.com/Insertl/QuotasHub/main/BETAv1.3"))()"},
-            {"Prison Life Cheat", "loadstring(game:HttpGet("https://rawscripts.net/raw/Prison-Life-Ware-v1-3-14889"))()"},
+            {"Arsenal Cheat", "https://raw.githubusercontent.com/enzoisgod/arsenal/refs/heads/main/arsenal"},
+            {"Prison Life Cheat", "https://rawscripts.net/raw/Prison-Life-Ware-v1-3-14889"},
         },
         Neptune = {
-            {"Site 43", "https://raw.githubusercontent.com/e1998a/Site-43/refs/heads/main/Neptune%20Scripts"},
+            {"Site 43", "https://raw.githubusercontent.com/e1998a/Site-43/main/Neptune%20Scripts"},
             {"ACS Killer", "https://api.luarmor.net/files/v3/loaders/751c7de617925e07d7f749cf3b359d85.lua"},
             {"Galax RP", "https://api.luarmor.net/files/v3/loaders/63e831909f9064fa7fdb53a9cfc8f726.lua"},
-            {"Bypass Adonis", "https://raw.githubusercontent.com/e1998ee/adonisb1p3ss/refs/heads/main/NeptuneScripts"},
+            {"Bypass Adonis", "https://raw.githubusercontent.com/e1998ee/adonisb1p3ss/main/NeptuneScripts"},
             {"Bypass AT Université RP FR", "https://api.luarmor.net/files/v3/loaders/3e6efdd2a262f9c7f7e47a07b121d344.lua"},
-            {"Secours de France (Swift)", "https://raw.githubusercontent.com/UHQ1377777/SFBYPASSEZ/refs/heads/main/NEPTUNECOMEBACK"},
-            {"Aimbot", "https://raw.githubusercontent.com/new-gugus/aimbot-neptune/refs/heads/main/aimbot.lua"},
+            {"Secours de France (Swift)", "https://raw.githubusercontent.com/UHQ1377777/SFBYPASSEZ/main/NEPTUNECOMEBACK"},
+            {"Aimbot", "https://raw.githubusercontent.com/new-gugus/aimbot-neptune/main/aimbot.lua"},
         }
     }
 
@@ -245,70 +256,58 @@ Certains scripts nécessitent Swift ou Solara pour fonctionner.
 2. Aucune distribution du script sans autorisation
 3. L’auteur n’est pas responsable d’un mauvais usage
 ]]
+
             rulesText.TextWrapped = true
             rulesText.TextColor3 = Color3.new(1, 1, 1)
-            rulesText.BackgroundTransparency = 1
             rulesText.Font = Enum.Font.Gotham
-            rulesText.TextSize = 16
+            rulesText.TextSize = 18
+            rulesText.BackgroundTransparency = 1
 
             local acceptBtn = Instance.new("TextButton", content)
-            acceptBtn.Size = UDim2.new(0.5, 0, 0, 35)
-            acceptBtn.Position = UDim2.new(0.25, 0, 1, -40)
+            acceptBtn.Size = UDim2.new(0.5, 0, 0, 40)
+            acceptBtn.Position = UDim2.new(0.25, 0, 1, -45)
             acceptBtn.Text = "J'ai lu et j'accepte"
-            acceptBtn.BackgroundColor3 = Color3.fromRGB(70, 70, 120)
+            acceptBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
             acceptBtn.TextColor3 = Color3.new(1, 1, 1)
             Instance.new("UICorner", acceptBtn)
 
             acceptBtn.MouseButton1Click:Connect(function()
                 hasReadRules = true
-                for _, child in ipairs(main:GetChildren()) do
-                    if child:IsA("TextButton") and child.Text == "Règlement" then
-                        child:Destroy()
-                    end
-                end
-                for _, child in ipairs(main:GetChildren()) do
-                    if child:IsA("TextButton") then
-                        child.Active = true
-                        child.AutoButtonColor = true
-                        child.TextColor3 = Color3.new(1,1,1)
-                    end
-                end
-                for _, child in ipairs(main:GetChildren()) do
-                    if child:IsA("TextButton") and child.Text == "Accueil" then
-                        child.MouseButton1Click:Fire()
-                        break
-                    end
-                end
+                clearContent()
+                tabs[2][2]() -- Par défaut, affiche l'onglet Effexe
             end)
         end},
     }
 
-    -- 🧭 Barre des onglets
-    local buttonY = 10
+    -- Création des onglets (tabs) en haut
+    local tabFrame = Instance.new("Frame", main)
+    tabFrame.Size = UDim2.new(1, 0, 0, 40)
+    tabFrame.Position = UDim2.new(0, 0, 0, 0)
+    tabFrame.BackgroundTransparency = 1
+
+    local btnWidth = 600 / #tabs
+
     for i, tab in ipairs(tabs) do
-        local btn = Instance.new("TextButton", main)
-        btn.Size = UDim2.new(0, 110, 0, 30)
-        btn.Position = UDim2.new(0, 10 + (i - 1) * 120, 0, buttonY)
+        local btn = Instance.new("TextButton", tabFrame)
+        btn.Size = UDim2.new(0, btnWidth, 1, 0)
+        btn.Position = UDim2.new(0, btnWidth * (i - 1), 0, 0)
         btn.Text = tab[1]
-        btn.BackgroundColor3 = Color3.fromRGB(60, 60, 80)
-        btn.TextColor3 = Color3.new(1, 1, 1)
-        btn.AutoButtonColor = true
+        btn.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
+        btn.TextColor3 = Color3.new(1,1,1)
+        btn.Font = Enum.Font.Gotham
+        btn.TextSize = 18
         Instance.new("UICorner", btn)
 
-        if tab[1] ~= "Règlement" then
-            btn.Active = false
-            btn.AutoButtonColor = false
-            btn.TextColor3 = Color3.fromRGB(100, 100, 100)
-        end
-
         btn.MouseButton1Click:Connect(function()
-            if btn.Active then
-                tab[2]()
+            if tab[1] ~= "Règlement" and not hasReadRules then
+                clearContent()
+                tabs[#tabs][2]() -- affiche le règlement si non lu
+                return
             end
-        end)
-
-        if tab[1] == "Règlement" then
             tab[2]()
-        end
+        end)
     end
+
+    -- Affiche d’abord le règlement
+    tabs[#tabs][2]()
 end
